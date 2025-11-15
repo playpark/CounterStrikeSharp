@@ -11,25 +11,25 @@ namespace CounterStrikeSharp.API.Modules.Memory;
 public static class VirtualFunctions
 {
     public static MemoryFunctionVoid<IntPtr, HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintFunc =
-        new(GameData.GetSignature("ClientPrint"));
+   new(NativeAPI.FindSignature("server.dll", "ClientPrint");
 
-    public static Action<IntPtr, HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrint =
-        ClientPrintFunc.Invoke;
+public static Action<IntPtr, HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrint =
+    ClientPrintFunc.Invoke;
 
-    public static MemoryFunctionVoid<HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintAllFunc =
-        new(GameData.GetSignature("UTIL_ClientPrintAll"));
+public static MemoryFunctionVoid<HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintAllFunc =
+    new(NativeAPI.FindSignature("server.dll", "ClientPrintAll");
 
-    public static Action<HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintAll =
-        ClientPrintAllFunc.Invoke;
+public static Action<HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintAll =
+    ClientPrintAllFunc.Invoke;
 
-    // void (*FnGiveNamedItem)(void* itemService,const char* pchName, void* iSubType,void* pScriptItem, void* a5,void* a6) = nullptr;
-    public static MemoryFunctionWithReturn<IntPtr, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> GiveNamedItemFunc =
-        new(GameData.GetSignature("GiveNamedItem"));
+// void (*FnGiveNamedItem)(void* itemService,const char* pchName, void* iSubType,void* pScriptItem, void* a5,void* a6) = nullptr;
+public static MemoryFunctionWithReturn<IntPtr, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> GiveNamedItemFunc =
+   new(NativeAPI.FindSignature("server.dll", "GiveNamedItem");
 
-    public static Func<IntPtr, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> GiveNamedItem = GiveNamedItemFunc.Invoke;
+public static Func<IntPtr, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> GiveNamedItem = GiveNamedItemFunc.Invoke;
 
-    public static MemoryFunctionVoid<IntPtr, byte> SwitchTeamFunc =
-        new(GameData.GetSignature("CCSPlayerController_SwitchTeam"));
+public static MemoryFunctionVoid<IntPtr, byte> SwitchTeamFunc =
+    new(new(NativeAPI.FindSignature("server.dll", "CCSPlayerController_SwitchTeam"));
 
     public static Action<IntPtr, byte> SwitchTeam = SwitchTeamFunc.Invoke;
 
