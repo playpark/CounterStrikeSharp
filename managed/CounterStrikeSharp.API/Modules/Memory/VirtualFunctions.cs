@@ -11,37 +11,37 @@ namespace CounterStrikeSharp.API.Modules.Memory;
 public static class VirtualFunctions
 {
     public static MemoryFunctionVoid<IntPtr, HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintFunc =
-   new(NativeAPI.FindSignature("server.dll", "ClientPrint");
+   new(NativeAPI.FindSignature("server.dll", "ClientPrint"));
 
 public static Action<IntPtr, HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrint =
     ClientPrintFunc.Invoke;
 
 public static MemoryFunctionVoid<HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintAllFunc =
-    new(NativeAPI.FindSignature("server.dll", "ClientPrintAll");
+    new(NativeAPI.FindSignature("server.dll", "ClientPrintAll"));
 
 public static Action<HudDestination, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> ClientPrintAll =
     ClientPrintAllFunc.Invoke;
 
 // void (*FnGiveNamedItem)(void* itemService,const char* pchName, void* iSubType,void* pScriptItem, void* a5,void* a6) = nullptr;
 public static MemoryFunctionWithReturn<IntPtr, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> GiveNamedItemFunc =
-   new(NativeAPI.FindSignature("server.dll", "GiveNamedItem");
+   new(NativeAPI.FindSignature("server.dll", "GiveNamedItem"));
 
 public static Func<IntPtr, string, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr> GiveNamedItem = GiveNamedItemFunc.Invoke;
 
 public static MemoryFunctionVoid<IntPtr, byte> SwitchTeamFunc =
-    new(new(NativeAPI.FindSignature("server.dll", "CCSPlayerController_SwitchTeam"));
+    new(NativeAPI.FindSignature("server.dll", "CCSPlayerController_SwitchTeam"));
 
     public static Action<IntPtr, byte> SwitchTeam = SwitchTeamFunc.Invoke;
 
     // void(*UTIL_Remove)(CEntityInstance*);
     public static MemoryFunctionVoid<IntPtr> UTIL_RemoveFunc =
-        new(GameData.GetSignature("UTIL_Remove"));
+        new(NativeAPI.FindSignature("server.dll", "Util_Remove"));
 
     public static Action<IntPtr> UTIL_Remove = UTIL_RemoveFunc.Invoke;
 
     // void(*CBaseModelEntity_SetModel)(CBaseModelEntity*, const char*);
     public static MemoryFunctionVoid<IntPtr, string> SetModelFunc =
-        new(GameData.GetSignature("CBaseModelEntity_SetModel"));
+        new(NativeAPI.FindSignature("server.dll", "CBaseModelEntity_SetModel"));
 
     public static Action<IntPtr, string> SetModel = SetModelFunc.Invoke;
 
