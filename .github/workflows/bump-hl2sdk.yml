@@ -23,29 +23,29 @@ jobs:
         id: current
         run: |
           cd libraries/hl2sdk-cs2
-          CURRENT_COMMIT=$(git rev-parse HEAD)
-          echo "commit=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+          CURRENT_COMMIT="$(git rev-parse HEAD)"
+          echo "commit=$CURRENT_COMMIT" >> "$GITHUB_OUTPUT"
           echo "Current hl2sdk commit: $CURRENT_COMMIT"
 
       - name: Fetch latest hl2sdk cs2 branch
         id: latest
         run: |
-          LATEST_COMMIT=$(git ls-remote https://github.com/alliedmodders/hl2sdk refs/heads/cs2 | cut -f1)
-          if [ -z "$LATEST_COMMIT" ]; then
+          LATEST_COMMIT="$(git ls-remote https://github.com/alliedmodders/hl2sdk refs/heads/cs2 | cut -f1)"
+          if [ -z "${LATEST_COMMIT}" ]; then
             echo "::error::Failed to fetch latest commit from hl2sdk"
             exit 1
           fi
-          echo "commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
+          echo "commit=$LATEST_COMMIT" >> "$GITHUB_OUTPUT"
           echo "Latest hl2sdk cs2 commit: $LATEST_COMMIT"
 
       - name: Check if update is needed
         id: check
         run: |
           if [ "${{ steps.current.outputs.commit }}" = "${{ steps.latest.outputs.commit }}" ]; then
-            echo "needs_update=false" >> $GITHUB_OUTPUT
+            echo "needs_update=false" >> "$GITHUB_OUTPUT"
             echo "hl2sdk is already up to date"
           else
-            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "needs_update=true" >> "$GITHUB_OUTPUT"
             echo "hl2sdk update available!"
           fi
 
@@ -55,22 +55,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          EXISTING_PR=$(gh pr list --state open --head "chore/bump-hl2sdk" --json number,body --jq '.[0] // empty')
-          if [ -n "$EXISTING_PR" ]; then
-            PR_NUMBER=$(echo "$EXISTING_PR" | jq -r '.number')
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          EXISTING_PR="$(gh pr list --state open --head "chore/bump-hl2sdk" --json number,body --jq '.[0] // empty')"
+          if [ -n "${EXISTING_PR}" ]; then
+            PR_NUMBER="$(echo "${EXISTING_PR}" | jq -r '.number')"
+            echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
             echo "Existing PR found: #$PR_NUMBER"
 
-            EXISTING_TARGET=$(echo "$EXISTING_PR" | jq -r '.body' | grep -oP '(?<=\*\*To:\*\* `)[a-f0-9]+(?=`)' || true)
-            if [ "$EXISTING_TARGET" = "${{ steps.latest.outputs.commit }}" ]; then
-              echo "skip=true" >> $GITHUB_OUTPUT
+            EXISTING_TARGET="$(echo "${EXISTING_PR}" | jq -r '.body' | grep -oP '(?<=\*\*To:\*\* `)[a-f0-9]+(?=`)' || true)"
+            if [ "${EXISTING_TARGET}" = "${{ steps.latest.outputs.commit }}" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
               echo "Existing PR already targets latest commit, skipping"
             else
-              echo "skip=false" >> $GITHUB_OUTPUT
+              echo "skip=false" >> "$GITHUB_OUTPUT"
               echo "Existing PR needs update"
             fi
           else
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "No existing PR found"
           fi
 
@@ -106,26 +106,26 @@ jobs:
         if: steps.check.outputs.needs_update == 'true' && steps.existing_pr.outputs.skip != 'true'
         run: |
           mkdir -p .github
-          cat > .github/pr-body.md << 'ENDOFBODY'
-          Automated PR to update hl2sdk submodule.
-
-          ## Changes
-          ENDOFBODY
-          echo "- **From:** \`${{ steps.current.outputs.commit }}\`" >> .github/pr-body.md
-          echo "- **To:** \`${{ steps.latest.outputs.commit }}\`" >> .github/pr-body.md
-          echo "" >> .github/pr-body.md
-          echo "## Commits in this update" >> .github/pr-body.md
-          echo '```' >> .github/pr-body.md
-          cat /tmp/commits.txt >> .github/pr-body.md
-          echo '```' >> .github/pr-body.md
-          echo "" >> .github/pr-body.md
-          echo "## Latest commit info" >> .github/pr-body.md
-          echo "- **Message:** ${{ steps.commit_info.outputs.message }}" >> .github/pr-body.md
-          echo "- **Author:** ${{ steps.commit_info.outputs.author }}" >> .github/pr-body.md
-          echo "- **Date:** ${{ steps.commit_info.outputs.date }}" >> .github/pr-body.md
-          echo "" >> .github/pr-body.md
-          echo "---" >> .github/pr-body.md
-          echo "🤖 This PR was automatically created by the [bump-hl2sdk workflow](https://github.com/${{ github.repository }}/actions/workflows/bump-hl2sdk.yml)." >> .github/pr-body.md
+          {
+            echo "Automated PR to update hl2sdk submodule."
+            echo ""
+            echo "## Changes"
+            echo "- **From:** \`${{ steps.current.outputs.commit }}\`"
+            echo "- **To:** \`${{ steps.latest.outputs.commit }}\`"
+            echo ""
+            echo "## Commits in this update"
+            echo '```'
+            cat /tmp/commits.txt
+            echo '```'
+            echo ""
+            echo "## Latest commit info"
+            echo "- **Message:** ${{ steps.commit_info.outputs.message }}"
+            echo "- **Author:** ${{ steps.commit_info.outputs.author }}"
+            echo "- **Date:** ${{ steps.commit_info.outputs.date }}"
+            echo ""
+            echo "---"
+            echo "🤖 This PR was automatically created by the [bump-hl2sdk workflow](https://github.com/${{ github.repository }}/actions/workflows/bump-hl2sdk.yml)."
+          } > .github/pr-body.md
 
       - name: Create or update Pull Request
         if: steps.check.outputs.needs_update == 'true' && steps.existing_pr.outputs.skip != 'true'
