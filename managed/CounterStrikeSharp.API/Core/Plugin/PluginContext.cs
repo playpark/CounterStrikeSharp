@@ -24,6 +24,7 @@ using CounterStrikeSharp.API.Core.Hosting;
 using CounterStrikeSharp.API.Core.Logging;
 using CounterStrikeSharp.API.Core.Sentry;
 using CounterStrikeSharp.API.Core.Translations;
+using CounterStrikeSharp.API.Modules.Config;
 using CounterStrikeSharp.API.Core.Plugin.Host;
 using McMaster.NETCore.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -255,8 +256,15 @@ namespace CounterStrikeSharp.API.Core.Plugin
 
                 _logger.LogInformation("Finished loading plugin {Name}", Plugin.ModuleName);
 
-                // Register plugin with Sentry service if it implements IPluginSentry
-                SentryService.Instance?.RegisterPlugin(Plugin);
+                // Register plugin with Sentry service, passing config if available for DSN override
+                IBasePluginConfig? pluginConfig = null;
+                var configInterface = Plugin.GetType().GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IPluginConfig<>));
+                if (configInterface != null)
+                {
+                    pluginConfig = configInterface.GetProperty("Config")?.GetValue(Plugin) as IBasePluginConfig;
+                }
+                SentryService.Instance?.RegisterPlugin(Plugin, pluginConfig);
 
                 State = PluginState.Loaded;
             }

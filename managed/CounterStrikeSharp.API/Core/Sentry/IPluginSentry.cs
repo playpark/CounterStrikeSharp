@@ -20,17 +20,26 @@ using Sentry;
 namespace CounterStrikeSharp.API.Core.Sentry;
 
 /// <summary>
-/// Interface for plugins that want to provide their own Sentry DSN.
-/// Implement this interface to send exceptions from your plugin to a custom Sentry project.
+/// Interface for plugins that want to provide their own Sentry DSN for error tracking.
 /// </summary>
 /// <remarks>
 /// <para>
-/// If <see cref="IsDefaultDsn"/> is true and the DSN is not empty, a warning will be shown
-/// to server operators that exception data may be sent to the plugin author.
+/// <b>Current Limitation:</b> Due to Sentry SDK architecture, only a single DSN can be active
+/// at a time. Plugin DSNs are currently registered for informational purposes and will trigger
+/// a warning to server operators, but exceptions are still sent to the core DSN.
+/// Full multi-DSN support may be added in a future version.
 /// </para>
 /// <para>
-/// Server operators can override the plugin's DSN by implementing <see cref="IPluginSentryConfig"/>
-/// and providing a <c>SentryDsn</c> property in the plugin's configuration file.
+/// If <see cref="IsDefaultDsn"/> is true and the DSN is not empty, a warning will be shown
+/// to server operators that the plugin author has configured error tracking.
+/// </para>
+/// <para>
+/// For now, plugin authors who want dedicated error tracking should:
+/// <list type="number">
+/// <item>Use the extension method <c>this.CaptureException()</c> to manually capture exceptions</item>
+/// <item>Add custom tags via the scope configuration to identify your plugin</item>
+/// <item>Consider setting up Sentry issue routing rules based on the <c>plugin</c> tag</item>
+/// </list>
 /// </para>
 /// </remarks>
 /// <example>
@@ -68,9 +77,15 @@ public interface IPluginSentry
     bool IsDefaultDsn { get; }
 
     /// <summary>
-    /// Called when Sentry captures an exception for this plugin.
-    /// Use this method to add custom context, tags, or user information to the Sentry event.
+    /// Called to add custom context, tags, or user information to a Sentry event.
     /// </summary>
+    /// <remarks>
+    /// <b>Note:</b> This method is not automatically called by the core exception handlers.
+    /// To use this, call it manually when using <c>this.CaptureException()</c>:
+    /// <code>
+    /// this.CaptureException(ex, scope => ConfigureSentryScope(scope, ex));
+    /// </code>
+    /// </remarks>
     /// <param name="scope">The Sentry scope to configure.</param>
     /// <param name="exception">The exception being captured.</param>
     void ConfigureSentryScope(Scope scope, Exception exception);

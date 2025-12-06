@@ -15,11 +15,11 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using CounterStrikeSharp.API.Core.Plugin;
-using CounterStrikeSharp.API.Modules.Entities.Constants;
+using CounterStrikeSharp.API.Modules.Config;
 using Microsoft.Extensions.Logging;
 using Sentry;
 
@@ -34,7 +34,7 @@ public class SentryService : IStartupService, IDisposable
     private readonly ILogger<SentryService> _logger;
     private IDisposable? _sentryDisposable;
     private static SentryService? _instance;
-    private readonly Dictionary<string, PluginSentryInfo> _pluginSentryInfo = new();
+    private readonly ConcurrentDictionary<string, PluginSentryInfo> _pluginSentryInfo = new();
 
     /// <summary>
     /// Gets the singleton instance of the Sentry service.
@@ -148,7 +148,29 @@ public class SentryService : IStartupService, IDisposable
     /// <param name="configureScope">Optional action to configure the Sentry scope.</param>
     public static void CapturePluginException(BasePlugin plugin, Exception exception, Action<Scope>? configureScope = null)
     {
-        CapturePluginException(plugin.ModuleName, plugin.ModuleVersion, exception, configureScope);
+        if (!IsEnabled) return;
+
+        CaptureException(exception, scope =>
+        {
+            scope.SetTag("plugin", plugin.ModuleName);
+            scope.SetTag("plugin_version", plugin.ModuleVersion);
+
+            // Call plugin's custom scope configuration if it implements IPluginSentry
+            if (plugin is IPluginSentry sentryPlugin)
+            {
+                try
+                {
+                    sentryPlugin.ConfigureSentryScope(scope, exception);
+                }
+                catch
+                {
+                    // Don't let plugin's scope config break Sentry capture
+                }
+            }
+
+            // Apply any additional configuration passed by caller
+            configureScope?.Invoke(scope);
+        });
     }
 
     /// <summary>
@@ -160,22 +182,41 @@ public class SentryService : IStartupService, IDisposable
     {
         if (player == null || !CoreConfig.Sentry.IncludePlayerContext) return;
 
-        scope.SetTag("player_steamid", player.AuthorizedSteamID?.ToString() ?? "unknown");
-        scope.SetTag("player_name", player.PlayerName ?? "unknown");
-        scope.SetTag("player_team", player.Team.ToString());
-        scope.SetTag("player_slot", player.Slot.ToString());
+        try
+        {
+            if (!player.IsValid) return;
+
+            scope.SetTag("player_steamid", player.AuthorizedSteamID?.ToString() ?? "unknown");
+            scope.SetTag("player_name", player.PlayerName ?? "unknown");
+            scope.SetTag("player_team", player.Team.ToString());
+            scope.SetTag("player_slot", player.Slot.ToString());
+        }
+        catch
+        {
+            // Player may become invalid during exception handling
+        }
     }
 
     /// <summary>
     /// Registers a plugin with the Sentry service for plugin-specific DSN tracking.
     /// </summary>
     /// <param name="plugin">The plugin to register.</param>
-    public void RegisterPlugin(IPlugin plugin)
+    /// <param name="config">Optional plugin config that may override the DSN.</param>
+    public void RegisterPlugin(IPlugin plugin, IBasePluginConfig? config = null)
     {
         if (plugin is IPluginSentry sentrySupportedPlugin)
         {
             var dsn = sentrySupportedPlugin.SentryDsn;
             var isDefault = sentrySupportedPlugin.IsDefaultDsn;
+
+            // Check if config overrides the DSN
+            if (config is IPluginSentryConfig sentryConfig &&
+                !string.IsNullOrWhiteSpace(sentryConfig.SentryDsn))
+            {
+                dsn = sentryConfig.SentryDsn;
+                isDefault = false; // Config override is not a default
+                _logger.LogDebug("Plugin '{PluginName}' Sentry DSN overridden by config", plugin.ModuleName);
+            }
 
             if (isDefault && !string.IsNullOrWhiteSpace(dsn))
             {
@@ -200,7 +241,7 @@ public class SentryService : IStartupService, IDisposable
     /// <param name="pluginName">The name of the plugin to unregister.</param>
     public void UnregisterPlugin(string pluginName)
     {
-        _pluginSentryInfo.Remove(pluginName);
+        _pluginSentryInfo.TryRemove(pluginName, out _);
     }
 
     /// <summary>
