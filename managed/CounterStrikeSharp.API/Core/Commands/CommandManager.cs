@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using CounterStrikeSharp.API.Core.Plugin;
+using CounterStrikeSharp.API.Core.Sentry;
 using CounterStrikeSharp.API.Core.Translations;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
@@ -162,7 +164,27 @@ public class CommandManager : ICommandManager
                     }
                 }
 
-                command.Callback?.Invoke(caller, info);
+                try
+                {
+                    command.Callback?.Invoke(caller, info);
+                }
+                catch (Exception e)
+                {
+                    if ((e.InnerException ?? e) is PluginTerminationException)
+                    {
+                        return;
+                    }
+
+                    _logger.LogError(e, "Error executing command {Command}", name);
+
+                    SentryService.CaptureException(e.InnerException ?? e, scope =>
+                    {
+                        scope.SetTag("entry_point", "CommandManager");
+                        scope.SetTag("command", name);
+                        scope.SetTag("method_declaring_type", methodInfo?.DeclaringType?.FullName ?? "unknown");
+                        SentryService.SetPlayerContext(scope, caller);
+                    });
+                }
             }
         }
     }

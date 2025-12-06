@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using CounterStrikeSharp.API.Core.Sentry;
 using Microsoft.Extensions.Logging;
 
 namespace CounterStrikeSharp.API.Core
@@ -113,6 +114,13 @@ namespace CounterStrikeSharp.API.Core
                     }
 
                     Application.Instance.Logger.LogError(e, "Error invoking callback");
+
+                    SentryService.CaptureException(e.InnerException ?? e, scope =>
+                    {
+                        scope.SetTag("entry_point", "FunctionReference");
+                        scope.SetTag("method", _targetMethod.Method.Name);
+                        scope.SetTag("method_declaring_type", _targetMethod.Method.DeclaringType?.FullName ?? "unknown");
+                    });
                 }
                 finally
                 {

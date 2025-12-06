@@ -22,6 +22,7 @@ using CounterStrikeSharp.API.Core.Capabilities;
 using CounterStrikeSharp.API.Core.Commands;
 using CounterStrikeSharp.API.Core.Hosting;
 using CounterStrikeSharp.API.Core.Logging;
+using CounterStrikeSharp.API.Core.Sentry;
 using CounterStrikeSharp.API.Core.Translations;
 using CounterStrikeSharp.API.Core.Plugin.Host;
 using McMaster.NETCore.Plugins;
@@ -254,6 +255,9 @@ namespace CounterStrikeSharp.API.Core.Plugin
 
                 _logger.LogInformation("Finished loading plugin {Name}", Plugin.ModuleName);
 
+                // Register plugin with Sentry service if it implements IPluginSentry
+                SentryService.Instance?.RegisterPlugin(Plugin);
+
                 State = PluginState.Loaded;
             }
         }
@@ -267,6 +271,9 @@ namespace CounterStrikeSharp.API.Core.Plugin
             var cachedName = Plugin.ModuleName;
 
             _logger.LogInformation("Unloading plugin {Name}", Plugin.ModuleName);
+
+            // Unregister plugin from Sentry service
+            SentryService.Instance?.UnregisterPlugin(Plugin.ModuleName);
 
             try
             {

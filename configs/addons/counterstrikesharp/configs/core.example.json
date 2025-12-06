@@ -9,5 +9,33 @@
     "UnlockConCommands": true,
     "UnlockConVars": true,
     "AutoUpdateEnabled": true,
-    "AutoUpdateURL": "http://gamedata.cssharp.dev"
+    "AutoUpdateURL": "http://gamedata.cssharp.dev",
+
+    // Sentry error tracking configuration
+    // To enable Sentry, set "Enabled" to true and provide your Sentry DSN
+    "Sentry": {
+        // Enable or disable Sentry error tracking
+        "Enabled": false,
+
+        // Your Sentry DSN (Data Source Name)
+        // Get this from your Sentry project settings: https://sentry.io
+        "Dsn": "",
+
+        // Environment tag (e.g., "production", "staging", "development")
+        "Environment": "production",
+
+        // Sample rate for error capture (0.0 to 1.0)
+        // 1.0 = capture all errors, 0.5 = capture 50% of errors
+        "SampleRate": 1.0,
+
+        // Include server information (map, player count, etc.) in Sentry events
+        "IncludeServerInfo": true,
+
+        // Include player context (SteamID, name) in Sentry events
+        // Consider privacy implications when enabling this option
+        "IncludePlayerContext": true,
+
+        // Enable Sentry SDK debug logging (useful for troubleshooting)
+        "Debug": false
+    }
 }

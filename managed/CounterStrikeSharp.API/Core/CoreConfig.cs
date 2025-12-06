@@ -28,6 +28,7 @@ using System.Linq;
 using CounterStrikeSharp.API.Core.Commands;
 using CounterStrikeSharp.API.Core.Hosting;
 using CounterStrikeSharp.API.Core.Logging;
+using CounterStrikeSharp.API.Core.Sentry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -70,6 +71,9 @@ namespace CounterStrikeSharp.API.Core
 
         [JsonPropertyName("AutoUpdateURL")]
         public string AutoUpdateURL { get; set; } = "http://gamedata.cssharp.dev";
+
+        [JsonPropertyName("Sentry")]
+        public SentryConfigData Sentry { get; set; } = new SentryConfigData();
     }
 
     /// <summary>
@@ -125,6 +129,11 @@ namespace CounterStrikeSharp.API.Core
         public static bool UnlockConCommands => _coreConfig.UnlockConCommands;
 
         public static bool UnlockConVars => _coreConfig.UnlockConVars;
+
+        /// <summary>
+        /// Sentry error tracking configuration.
+        /// </summary>
+        public static SentryConfigData Sentry => _coreConfig.Sentry;
 
     }
 

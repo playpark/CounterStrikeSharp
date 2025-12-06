@@ -21,6 +21,8 @@ using System.Linq;
 using System.Reflection;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Core.Plugin;
+using CounterStrikeSharp.API.Core.Sentry;
 using CounterStrikeSharp.API.Core.Translations;
 using CounterStrikeSharp.API.Core.Commands;
 using CounterStrikeSharp.API.Modules.Admin;
@@ -220,9 +222,32 @@ namespace CounterStrikeSharp.API.Core
             var wrappedHandler = new Func<int, IntPtr, HookResult>((i, ptr) =>
             {
                 var caller = (i != -1) ? new CCSPlayerController(NativeAPI.GetEntityFromIndex(i + 1)) : null;
-
                 var command = new CommandInfo(ptr, caller);
-                return handler.Invoke(caller, command);
+
+                try
+                {
+                    return handler.Invoke(caller, command);
+                }
+                catch (Exception e)
+                {
+                    if ((e.InnerException ?? e) is PluginTerminationException)
+                    {
+                        return HookResult.Continue;
+                    }
+
+                    Application.Instance.Logger.LogError(e, "Error in command listener for {Command} in plugin {Plugin}", name ?? "unknown", ModuleName);
+
+                    SentryService.CaptureException(e.InnerException ?? e, scope =>
+                    {
+                        scope.SetTag("entry_point", "CommandListener");
+                        scope.SetTag("command", name ?? "unknown");
+                        scope.SetTag("plugin", ModuleName);
+                        scope.SetTag("plugin_version", ModuleVersion);
+                        SentryService.SetPlayerContext(scope, caller);
+                    });
+
+                    return HookResult.Continue;
+                }
             });
 
             var subscriber = new CallbackSubscriber(handler, wrappedHandler, () => { RemoveCommandListener(name, handler, mode); });
@@ -302,7 +327,27 @@ namespace CounterStrikeSharp.API.Core
                         args[i] = Activator.CreateInstance(parameterTypes[i], new[] { args[i] });
                 }
 
-                handler.DynamicInvoke(args);
+                try
+                {
+                    handler.DynamicInvoke(args);
+                }
+                catch (Exception e)
+                {
+                    if ((e.InnerException ?? e) is PluginTerminationException)
+                    {
+                        return;
+                    }
+
+                    Application.Instance.Logger.LogError(e, "Error in listener {Listener} in plugin {Plugin}", listenerName, ModuleName);
+
+                    SentryService.CaptureException(e.InnerException ?? e, scope =>
+                    {
+                        scope.SetTag("entry_point", "Listener");
+                        scope.SetTag("listener", listenerName);
+                        scope.SetTag("plugin", ModuleName);
+                        scope.SetTag("plugin_version", ModuleVersion);
+                    });
+                }
             });
 
             var subscriber =
