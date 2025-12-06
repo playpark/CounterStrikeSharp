@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rev-parse:*)",
+      "Bash(git reset:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git fetch:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
