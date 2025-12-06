@@ -87,7 +87,7 @@ jobs:
           echo "date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-          # Get recent commits for PR body (last 10 since previous)
+          # Get commits in this update for PR body (last 20)
           cd ../..
           echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
           cd libraries/hl2sdk-cs2
@@ -110,7 +110,7 @@ jobs:
             - **From:** `${{ steps.current.outputs.commit }}`
             - **To:** `${{ steps.latest.outputs.commit }}`
 
-            ## Recent hl2sdk commits
+            ## Commits in this update
             ```
             ${{ steps.commit_info.outputs.COMMITS }}
             ```
