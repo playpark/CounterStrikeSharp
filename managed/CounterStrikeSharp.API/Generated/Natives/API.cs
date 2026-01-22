@@ -552,7 +552,7 @@ namespace CounterStrikeSharp.API.Core
         public static string GetMapName(){
 			lock (ScriptContext.GlobalScriptContext.Lock) {
 			ScriptContext.GlobalScriptContext.Reset();
-			ScriptContext.GlobalScriptContext.SetIdentifier(0x43C2ED68);
+			ScriptContext.GlobalScriptContext.SetIdentifier(0x0A2AEDC2);
 			ScriptContext.GlobalScriptContext.Invoke();
 			ScriptContext.GlobalScriptContext.CheckErrors();
 			return (string)ScriptContext.GlobalScriptContext.GetResult(typeof(string));
